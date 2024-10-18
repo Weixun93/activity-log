@@ -1,3 +1,83 @@
+# name: Build and Release
+
+# on:
+#   workflow_dispatch: # Allows manual triggering
+#     inputs:
+#       tag:
+#         description: 'Tag name'     
+#         required: true
+#       note:
+#         description: 'Release note'
+        
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         shell: bash
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Set up Node
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+#       - name: Build
+#         run: |
+#           npm i -g @vercel/ncc
+#           npm i @actions/github
+#           npm run build
+#       - name: Commit
+#         run: |
+#           git config --global user.name 'Weixun93'
+#           git config --global user.email '93048104+Weixun93@users.noreply.github.com'
+#           git commit -am "dist build"
+#           git push
+
+#   test:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     defaults:
+#       run:
+#         shell: bash
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Test index.js
+#         env:
+#           INPUT_GITHUB_USERNAME: "Weixun93"
+#           INPUT_GITHUB_TOKEN: ${{ secrets.ACTSECRET24 }}
+#           INPUT_TARGET_REPOS: '[Weixun93/activity-log]'
+#           INPUT_OUTPUT_STYLE: MARKDOWN
+#           INPUT_IGNORE_EVENTS: '[]'
+#           INPUT_README_PATH: README.md
+#           INPUT_COMMIT_MESSAGE: Update README.md
+#           INPUT_EVENT_LIMIT: '100'
+#         run: node ./dist/index.js
+        
+#   release:
+#     runs-on: ubuntu-latest
+#     needs: test
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Pull latest
+#         run: |
+#           git config --global user.name 'Weixun93'
+#           git config --global user.email '93048104+Weixun93@users.noreply.github.com'
+#           git pull
+#       - name: Tag it
+#         run: |
+#           git tag -a ${{ inputs.tag }} -m "${{ inputs.note }}" master
+#           git push --tags
+#       - name: Release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.github_token }}
+#         with:
+#           tag_name: ${{ inputs.tag }}
+#           release_name: Release ${{ inputs.tag }}
+#           body: ${{ inputs.note }}
+#           draft: false
+#           prerelease: false
+
 name: Build and Release
 
 on:
@@ -26,10 +106,11 @@ jobs:
           npm i -g @vercel/ncc
           npm i @actions/github
           npm run build
-      - name: Commit
+      - name: Commit changes and Push
         run: |
           git config --global user.name 'Weixun93'
           git config --global user.email '93048104+Weixun93@users.noreply.github.com'
+          git add .
           git commit -am "dist build"
           git push
 
@@ -77,3 +158,19 @@ jobs:
           body: ${{ inputs.note }}
           draft: false
           prerelease: false
+
+  close-issue:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue via GitHub API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=1  # 替換為要自動關閉的 Issue 編號
+          curl -X PATCH \
+            -H "Authorization: token $ACTSECRET24" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/Weixun93/activity-log/issues/$ISSUE_NUMBER \
+            -d '{"state":"closed"}'
+
