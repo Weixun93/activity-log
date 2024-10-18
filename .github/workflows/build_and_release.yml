@@ -165,11 +165,11 @@ jobs:
     steps:
       - name: Close issue via GitHub API
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ACTSECRET24 }}
         run: |
           ISSUE_NUMBER=1  # 替換為要自動關閉的 Issue 編號
           curl -X PATCH \
-            -H "Authorization: token $ACTSECRET24" \
+            -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/Weixun93/activity-log/issues/$ISSUE_NUMBER \
             -d '{"state":"closed"}'
